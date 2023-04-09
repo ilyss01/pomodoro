@@ -19,6 +19,7 @@ fn sleep_handle(time: Duration, str: String) {
         what_to_do = "chill".to_string();
     }
     println!("{} time has ended, press enter to {}", str, what_to_do);
+    // TODO: change stdin to something more sane
     io::stdin();
 }
 
@@ -32,6 +33,7 @@ fn main() {
     let long_break_time: Duration;
     let long_break_interval: u64;
 
+    // TODO: find another way to parse arguments, put them in another function
     match args.len() {
         // default case when the program is executed without any args e.g.
         // pomodoro
