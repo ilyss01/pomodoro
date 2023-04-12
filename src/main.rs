@@ -26,9 +26,15 @@ fn sleep_handle(time: Duration, str: String) {
 
 fn parse_args(args: Vec<String>) -> OrganizedArgs {
     // TODO: find another way to parse arguments, put them in another function
-    // TODO: add --help
     // transition from seconds to minutes will happen not there
+    let mut temp_struct = OrganizedArgs {
+        work_time: 25,
+        short_break: 5,
+        long_break: 20,
+        long_break_interval: 4,
+    };
     match args.len() {
+        1 => temp_struct,
         2 => {
             if args[1] == "--help" || args[1] == "-h" {
                 println!("Help page, hi");
@@ -51,12 +57,6 @@ fn parse_args(args: Vec<String>) -> OrganizedArgs {
         },
         // e.g. pomodoro --work 25 --short 5 --long 20 --cycles 4
         9 => {
-            let mut temp_struct = OrganizedArgs {
-                work_time: 25,
-                short_break: 5,
-                long_break: 20,
-                long_break_interval: 4,
-            };
             for i in 1..args.len() {
                 if args[i] == "--work" {
                     temp_struct.work_time = args[i + 1].parse().unwrap();
