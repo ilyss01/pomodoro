@@ -3,8 +3,9 @@ use std::process::exit;
 use std::thread::sleep;
 use std::time::Duration;
 
-// TODO: play sound on ending the session?
 // TODO: proper error handling == remove unwrap's
+// TODO? move to ncurses-like library for work time count, interactive pause
+// Known bug: program doesn't work like it should, parsing args is the problem
 
 struct OrganizedArgs {
     work_time: u32,
@@ -13,6 +14,7 @@ struct OrganizedArgs {
     long_break_interval: u32,
 }
 
+// Sleeps and prints nice output for what it's doing
 fn sleep_handle(time: Duration, str: String) {
     sleep(time);
     let what_to_do: String;
@@ -24,9 +26,8 @@ fn sleep_handle(time: Duration, str: String) {
     println!("{} time has ended, press enter to {}", str, what_to_do);
 }
 
+// Parses arguments to fill OrganizedArgs struct. Otherwise prints help/version
 fn parse_args(args: Vec<String>) -> OrganizedArgs {
-    // TODO: find another way to parse arguments, put them in another function
-    // transition from seconds to minutes will happen not there
     let mut temp_struct = OrganizedArgs {
         work_time: 25,
         short_break: 5,
@@ -34,7 +35,9 @@ fn parse_args(args: Vec<String>) -> OrganizedArgs {
         long_break_interval: 4,
     };
     match args.len() {
+        // e.g. pomodoro
         1 => temp_struct,
+        // e.g. pomodoro --help
         2 => {
             if args[1] == "--help" || args[1] == "-h" {
                 println!("Help page, hi");
@@ -46,8 +49,8 @@ fn parse_args(args: Vec<String>) -> OrganizedArgs {
                 println!("Unknown args, exiting");
                 exit(-1);
             }
-        }
-        // default case when the program is executed without any args e.g.
+        },
+        // when the program is executed without explicit args e.g.
         // e.g. pomodoro 25 5 15 4
         5 => OrganizedArgs {
             work_time: args[1].parse().unwrap(),
@@ -55,6 +58,7 @@ fn parse_args(args: Vec<String>) -> OrganizedArgs {
             long_break: args[3].parse().unwrap(),
             long_break_interval: args[4].parse().unwrap(),
         },
+        // when explicit args are given
         // e.g. pomodoro --work 25 --short 5 --long 20 --cycles 4
         9 => {
             for i in 1..args.len() {
@@ -72,7 +76,7 @@ fn parse_args(args: Vec<String>) -> OrganizedArgs {
                 }
             }
             temp_struct
-        }
+        },
         _ => {
             println!("Can't handle arguments, exiting program");
             exit(-1);
