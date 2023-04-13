@@ -8,9 +8,9 @@ use std::time::Duration;
 // Known bug: program doesn't work like it should, parsing args is the problem
 
 struct OrganizedArgs {
-    work_time: u32,
-    short_break: u32,
-    long_break: u32,
+    work_time: u64,
+    short_break: u64,
+    long_break: u64,
     long_break_interval: u32,
 }
 
@@ -94,9 +94,9 @@ fn main() {
     let long_break_interval: u32;
 
     // seconds -> minutes -> duration struct
-    work_time = Duration::new(60 * organized_args.work_time as u64, 0);
-    short_break_time = Duration::new(60 * organized_args.short_break as u64, 0);
-    long_break_time = Duration::new(60 * organized_args.long_break as u64, 0);
+    work_time = Duration::new(60 * organized_args.work_time, 0);
+    short_break_time = Duration::new(60 * organized_args.short_break, 0);
+    long_break_time = Duration::new(60 * organized_args.long_break, 0);
     long_break_interval = organized_args.long_break_interval;
 
     // main loop
