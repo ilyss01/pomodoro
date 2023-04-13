@@ -5,7 +5,6 @@ use std::time::Duration;
 
 // TODO: proper error handling == remove unwrap's
 // TODO? move to ncurses-like library for work time count, interactive pause
-// Known bug: program doesn't work like it should, parsing args is the problem
 
 struct OrganizedArgs {
     work_time: u64,
@@ -49,7 +48,7 @@ fn parse_args(args: Vec<String>) -> OrganizedArgs {
                 println!("Unknown args, exiting");
                 exit(-1);
             }
-        },
+        }
         // when the program is executed without explicit args e.g.
         // e.g. pomodoro 25 5 15 4
         5 => OrganizedArgs {
@@ -70,9 +69,6 @@ fn parse_args(args: Vec<String>) -> OrganizedArgs {
                     temp_struct.long_break = args[i + 1].parse().unwrap();
                 } else if args[i] == "--cycles" {
                     temp_struct.long_break_interval = args[i + 1].parse().unwrap();
-                } else {
-                    println!("Can't handle arguments, exiting the program");
-                    exit(-1);
                 }
             }
             temp_struct
