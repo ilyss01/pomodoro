@@ -1,6 +1,7 @@
 use std::env;
 use std::process::exit;
 use std::{io,thread::sleep, thread, time::Duration};
+/*
 use tui::{
     backend::CrosstermBackend,
     Terminal,
@@ -11,6 +12,7 @@ use crossterm::{
     event::{self, DisableMouseCapture, Event, KeyCode},
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen}
 };
+*/
 
 // TODO: proper error handling == remove unwrap's
 // TODO? move to ncurses-like library for work time count, interactive pause
@@ -91,6 +93,7 @@ fn parse_args(args: Vec<String>) -> OrganizedArgs {
 
 fn main() -> Result<(), io::Error> {
 
+    /*
     // i can input text 
     enable_raw_mode()?;
     let stdout = io::stdout();
@@ -119,6 +122,7 @@ fn main() -> Result<(), io::Error> {
         LeaveAlternateScreen,
         DisableMouseCapture
     )?;
+    */
 
     let args: Vec<String> = env::args().collect();
     let organized_args = parse_args(args);
