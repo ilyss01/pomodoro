@@ -1,7 +1,16 @@
 use std::env;
 use std::process::exit;
-use std::thread::sleep;
-use std::time::Duration;
+use std::{io,thread::sleep, thread, time::Duration};
+use tui::{
+    backend::CrosstermBackend,
+    Terminal,
+    widgets::{Widget, Block, Borders}
+};
+use crossterm::{
+    execute,
+    event::{self, DisableMouseCapture, Event, KeyCode},
+    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen}
+};
 
 // TODO: proper error handling == remove unwrap's
 // TODO? move to ncurses-like library for work time count, interactive pause
@@ -80,7 +89,37 @@ fn parse_args(args: Vec<String>) -> OrganizedArgs {
     }
 }
 
-fn main() {
+fn main() -> Result<(), io::Error> {
+
+    // i can input text 
+    enable_raw_mode()?;
+    let stdout = io::stdout();
+    let backend = CrosstermBackend::new(stdout);
+    let mut terminal = Terminal::new(backend)?;
+    terminal.clear()?;
+
+    // TODO
+    terminal.draw(|f| {
+        let size = f.size();
+        let text_position = f.set_cursor(f.size().x, f.size().y);
+        let text_contense  = vec!["hello", "world"];
+        let text = tui::text::Spans(text_contense);
+        let block = Block::default()
+            .borders(Borders::ALL);
+        f.render_widget(block, size);
+        f.render_widget(text, text_position);
+    })?;
+
+    // left for debug reasons
+
+    thread::sleep(Duration::new(5, 0));
+
+    execute!(
+        terminal.backend_mut(),
+        LeaveAlternateScreen,
+        DisableMouseCapture
+    )?;
+
     let args: Vec<String> = env::args().collect();
     let organized_args = parse_args(args);
     let mut cycle: u32 = 0;
