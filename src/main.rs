@@ -42,7 +42,7 @@ fn parse_args(args: Vec<String>) -> OrganizedArgs {
                 println!("Help page, hi");
                 exit(0);
             } else if args[1] == "--version" || args[1] == "-v" {
-                println!("{}", env!("CARGO_PKG_VERSION"));
+                println!("pomodoro {}", env!("CARGO_PKG_VERSION"));
                 exit(0);
             } else {
                 println!("Unknown args, exiting");
