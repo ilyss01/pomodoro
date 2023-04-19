@@ -4,26 +4,74 @@ use lib::{
     parse_args
 };
 use crossterm::{
-    event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
+    event::{self, DisableMouseCapture, Event, KeyCode},
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
-use std::{env, io, process::exit, thread, thread::sleep, time::Duration};
+use std::{env, io, time::Duration};
 use tui::{
     backend::{Backend, CrosstermBackend},
     layout::{Alignment, Constraint, Direction, Layout},
-    style::{Color, Modifier, Style},
-    text::{Span, Spans},
-    widgets::{Block, Borders, Paragraph, Wrap},
+    style::{Modifier, Style},
+    text::{Span, Spans, Text},
+    widgets::{Block, Borders, Paragraph},
     Frame, Terminal,
 };
+
+fn run_app<B: Backend>(terminal: &mut Terminal<B>) -> io::Result<()> {
+    loop {
+        terminal.draw(ui)?;
+
+        if let Event::Key(key) = event::read()? {
+            if let KeyCode::Char('q') = key.code {
+                return Ok(());
+            }
+        }
+    }
+}
+
+// need to initialize 3 vertical cencered chunks 
+// inside middle one should be promt or timer
+// check in run_app for user key_presses
+// if everything is fine timer += 1
+// render time -= 1
+fn ui<B: Backend>(f: &mut Frame<B>) {
+    // divide terminal into 3 vertical parts
+    let chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .margin(1)
+        .constraints(
+            [
+                Constraint::Percentage(30),
+                Constraint::Percentage(39),
+                Constraint::Percentage(30)
+            ].as_ref()
+        )
+        .split(f.size());
+
+    // outer border
+    let block = Block::default()
+        .borders(Borders::ALL);
+    f.render_widget(block, f.size());
+
+    // middle element
+    let block = Block::default()
+        .borders(Borders::NONE);
+    f.render_widget(block, chunks[1]);
+   
+    // text
+    let output_text = Paragraph::new("hello")
+        .style(Style::default())
+        .alignment(Alignment::Center);
+    f.render_widget(output_text, chunks[1]);
+}
 
 // TODO: proper error handling == remove unwrap's
 // TODO? move to ncurses-like library for work time count, interactive pause
 
 fn main() -> Result<(), io::Error> {
     // AlternateScreen - clears up the screen and returns what was before
-    // enable_raw_mode()?; // allows to disable all kb presses
+
     enable_raw_mode()?;
     let mut stdout = io::stdout();
     execute!(
@@ -34,50 +82,23 @@ fn main() -> Result<(), io::Error> {
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
 
-    // here should be the loop
-    sleep_handle(Duration::new(5, 0), "Work".to_string());
-    terminal.draw(|f| { // should probably move everything from here to the function
-        let size = f.size();
-        let block = Block::default().borders(Borders::ALL);
-        f.render_widget(block,size);
+    // run the app
+    let res = run_app(&mut terminal);
 
-        let chunks = Layout::default()
-            .direction(Direction::Vertical)
-            .margin(5)
-            .constraints(
-                [
-                    Constraint::Percentage(25),
-                    Constraint::Percentage(25),
-                    Constraint::Percentage(25),
-                    Constraint::Percentage(25),
-                ]
-                .as_ref(),
-                )
-            .split(size);
-        let create_block = |title| {
-            Block::default()
-                .borders(Borders::ALL)
-                .style(Style::default())
-        };
-        let text = vec![
-            Spans::from("Hi first line"),
-            Spans::from("hi second line")
-        ];
-        let paragraph = Paragraph::new(text.clone())
-            .style(Style::default())
-            .block(create_block("Right, wrap"))
-            .alignment(Alignment::Center)
-            .wrap(Wrap { trim: true });
-        f.render_widget(paragraph, chunks[0]);
-    })?;
-
+    // return terminal to default state
+    disable_raw_mode()?;
     execute!(
         terminal.backend_mut(),
-        LeaveAlternateScreen,
+        LeaveAlternateScreen
     )?;
-    disable_raw_mode()?;
     terminal.show_cursor()?;
 
+    if let Err(err) = res {
+        println!("{:?}", err)
+    }
+    Ok(())
+
+    /*
     let args: Vec<String> = env::args().collect();
     let organized_args = parse_args(args);
     let mut cycle: u32 = 0;
@@ -104,4 +125,5 @@ fn main() -> Result<(), io::Error> {
         }
         cycle += 1;
     }
+    */
 }
