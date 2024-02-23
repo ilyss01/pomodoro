@@ -2,7 +2,11 @@
 #include <unistd.h> // for sleep
 #include <ncurses.h>
 
-int main() {
+int main(int argc,char **argv) {
+    if (argc > 1) {
+        // TODO: implement taking args from CLI
+    }
+
     // initialize empty screen
     initscr();
 
@@ -10,14 +14,15 @@ int main() {
     cbreak();
     noecho();
 
-    WINDOW *win = newwin(LINES , COLS, 0, 0);
+	// set cursor invisible
+    curs_set(0);
+
+	// initialize main window
+    WINDOW *win = newwin(0, 0, 0, 0);
+    refresh(); // without refresh it doesn't work at all, TODO: wrefresh
 
 	// 0, 0 are for default border style
     box(win, 0, 0);
-    wrefresh(win);
-
-	// set cursor invisible
-    curs_set(0);
 
 	// move cursor to middle of the screen
     //move(LINES/2, COLS/2);
@@ -26,7 +31,10 @@ int main() {
 	//printw("hi");
 	// alternative to move(...); printw(...); is mvprintw
 
-	//mvwprintw(win, LINES/2, COLS/2, "hello");
+	// print message at the center of the screen
+	mvwprintw(win, LINES/2, COLS/2, "hello");
+	// show changes
+	wrefresh(win);
 
 	// refresh the screen, should not be used with win
 	//refresh();
@@ -36,4 +44,11 @@ int main() {
 
     // printf("%i %i\n", LINES, COLS);
     endwin();
+    delwin(win);
+
+    // return terminal to it's state before the program
+    echo();
+    nocbreak();
+    curs_set(1);
+    clear();
 }
