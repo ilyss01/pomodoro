@@ -1,54 +1,98 @@
-#include <ncurses.h>
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h> // for sleep
+#include <ncurses.h> // graphics
+#include <stdio.h>   // idk
+#include <stdlib.h>  // atoi
+#include <string.h>  // strlen
+#include <unistd.h>  // for sleep
+
+// The program kind of basically works
+// TODO: split in functions, make it circle by work->time->work->time...
+// TODO: center timer
+
+// For centering timer on screen
+#define COLON_LENGTH 1
+
+// https://stackoverflow.com/questions/9208296/ncurses-keyboard-input
+
+// Count length of given integer by counting it's digits
+int int_len(int n) {
+  int counter = 0;
+  while (n >= 1) {
+    n = n / 10;
+    counter++;
+  }
+  return counter;
+}
 
 int main(int argc, char **argv) {
-  if (argc > 1) {
-    // TODO: implement taking args from CLI
+  // Basic time set
+  int work_time = 25 * 60;
+  int break_time = 5 * 60;
+  uint8_t cycles = 0;
+  char c;
+
+  // Getting args via CLI, like: "pomodoro 25 5 0"
+  // TODO: unsafe, check to atoi
+  if (argc == 4) {
+    work_time = atoi(argv[1]) * 60;
+    break_time = atoi(argv[2]) * 60;
+    cycles = atoi(argv[3]);
   }
 
-  // initialize empty screen
+  // Initialize empty screen
+  // TODO: unsafe, place checks
   initscr();
 
-  // was taken from flappy bird in ncurses
-  cbreak();
+  // Was taken from flappy bird in ncurses
+  //cbreak();
   noecho();
+  halfdelay(10);
 
-  // set cursor invisible
+  // Set cursor invisible
   curs_set(0);
 
-  // initialize main window
+  // Initialize main window full screen
   WINDOW *win = newwin(0, 0, 0, 0);
-  refresh(); // without refresh it doesn't work at all, TODO: wrefresh
+  // Without refresh it doesn't work at all, still don't know why
+  // TODO: wrefresh
+  refresh();
 
-  // 0, 0 are for default border style
-  box(win, 0, 0);
+  while (true) {
+    wclear(win);
+    // 0, 0 are for default border style
+    box(win, 0, 0);
 
-  // move cursor to middle of the screen
-  // move(LINES/2, COLS/2);
+    uint8_t formated_mins = work_time / 60;
+    uint8_t formated_secs = work_time % 60;
+    uint8_t y_pos = LINES / 2;
+    // uint8_t x_pos = (COLS / 2) - int_len(formated_mins) - COLON_LENGTH +
+                    // int_len(formated_secs);
+    uint8_t x_pos = (COLS / 2) - int_len(formated_mins) ;
 
-  // print to screen
-  // printw("hi");
-  // alternative to move(...); printw(...); is mvprintw
+    // Print message at the center of the screen
+    mvwprintw(win, y_pos, x_pos, "%i:%i", formated_mins, formated_secs);
 
-  // print message at the center of the screen
-  char msg[] = "hello";
-  mvwprintw(win, (LINES / 2), ((COLS - strlen(msg) - 1) / 2), "hello");
-  // show changes
-  wrefresh(win);
+    // Show changes
+    wrefresh(win);
+    // TODO: sleep -> napms
+    // https://stackoverflow.com/questions/72111820/how-can-i-use-napms-in-ncurses
+    // sleep(1);
+    work_time -= 1;
 
-  // refresh the screen, should not be used with win
-  // refresh();
+    // Getting space quits the program
+    // getch is set to halfdelay(10) so every 10ms it gets ERR if nothing is pressed
+    c = getch();
+    if (c == ERR) {
+      continue;
+    } else if (c == ' ') {
+      break;
+    }
+  }
 
-  // getting character quits the program
-  getch();
-
-  // printf("%i %i\n", LINES, COLS);
+  // Cleaning procedure
   endwin();
   delwin(win);
 
-  // return terminal to it's state before the program
+  // Return terminal to it's state before the program
   echo();
   nocbreak();
   curs_set(1);
