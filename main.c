@@ -6,7 +6,7 @@
 
 // The program kind of basically works
 // TODO: split in functions, make it circle by work->time->work->time...
-// TODO: center timer
+// TODO: put initialization of time outside of loop
 
 // For centering timer on screen
 #define COLON_LENGTH 1
@@ -28,7 +28,7 @@ int main(int argc, char **argv) {
   int work_time = 25 * 60;
   int break_time = 5 * 60;
   uint8_t cycles = 0;
-  char c;
+  char input_char;
 
   // Getting args via CLI, like: "pomodoro 25 5 0"
   // TODO: unsafe, check to atoi
@@ -66,10 +66,14 @@ int main(int argc, char **argv) {
     uint8_t y_pos = LINES / 2;
     // uint8_t x_pos = (COLS / 2) - int_len(formated_mins) - COLON_LENGTH +
                     // int_len(formated_secs);
-    uint8_t x_pos = (COLS / 2) - int_len(formated_mins) ;
+    uint8_t x_pos = (COLS - int_len(formated_mins) - int_len(formated_secs))/2;
 
     // Print message at the center of the screen
-    mvwprintw(win, y_pos, x_pos, "%i:%i", formated_mins, formated_secs);
+    if (formated_secs < 10) {
+	  mvwprintw(win, y_pos, x_pos, "%i:0%i", formated_mins, formated_secs);
+    } else {
+      mvwprintw(win, y_pos, x_pos, "%i:%i", formated_mins, formated_secs);
+    }
 
     // Show changes
     wrefresh(win);
@@ -80,10 +84,10 @@ int main(int argc, char **argv) {
 
     // Getting space quits the program
     // getch is set to halfdelay(10) so every 10ms it gets ERR if nothing is pressed
-    c = getch();
-    if (c == ERR) {
+    input_char = getch();
+    if (input_char == ERR) {
       continue;
-    } else if (c == ' ') {
+    } else if (input_char == ' ') {
       break;
     }
   }
