@@ -1,98 +1,170 @@
 #include <ncurses.h> // graphics
-#include <stdio.h>   // idk
-#include <stdlib.h>  // atoi
-#include <string.h>  // strlen
-#include <unistd.h>  // for sleep
+#include <stdio.h>  // idk
+#include <stdlib.h> // atoi
+#include <string.h> // strlen
+#include <unistd.h> // for sleep
+#include <signal.h>
 
-// The program kind of basically works
-// TODO: split in functions, make it circle by work->time->work->time...
-// TODO: put initialization of time outside of loop
+// TODO: switching between mode on pause
+typedef enum state {
+  PAUSE,
+  WORK,
+  BREAK,
+} State;
 
-// For centering timer on screen
-#define COLON_LENGTH 1
+// TODO: fix a bug with strange centering
 
-// https://stackoverflow.com/questions/9208296/ncurses-keyboard-input
-
-// Count length of given integer by counting it's digits
-int int_len(int n) {
-  int counter = 0;
+// Length of given integer
+unsigned int_len(int n) {
+  unsigned counter = 0;
   while (n >= 1) {
-    n = n / 10;
-    counter++;
+    n /= 10;
+    counter += 1;
   }
   return counter;
 }
 
-int main(int argc, char **argv) {
-  // Basic time set
-  int work_time = 25 * 60;
-  int break_time = 5 * 60;
-  uint8_t cycles = 0;
+// Renders box around the screen and timer in the middle
+void render_timer(WINDOW *win, unsigned *time) {
+  uint8_t formated_mins = *time / 60;
+  uint8_t formated_secs = *time % 60;
+  uint8_t y_pos = LINES / 2;
+  uint8_t x_pos;
+  wclear(win);
+  box(win, 0, 0);
+  if (formated_secs < 10) {
+    // Additional zero is added in timer, so it must be subtracted from x
+    // coord
+    x_pos = (COLS - int_len(formated_mins) - int_len(formated_secs) - 1) / 2;
+    mvwprintw(win, y_pos, x_pos, "%i:0%i", formated_mins, formated_secs);
+  } else {
+    x_pos = (COLS - int_len(formated_mins) - int_len(formated_secs)) / 2;
+    mvwprintw(win, y_pos, x_pos, "%i:%i", formated_mins, formated_secs);
+  }
+  // Show changes
+  wrefresh(win);
+}
+
+// Renders box around the screen and given word in the middle
+void render_word(WINDOW *win, const char *word) {
+  uint8_t y_pos = LINES / 2;
+  uint8_t x_pos = (COLS - strlen("Pause"))/2;
+  wclear(win);
+  box(win, 0, 0);
+  mvwprintw(win, y_pos, x_pos, "Pause");
+  wrefresh(win);
+}
+
+// Handling pause screen
+void pause_screen(WINDOW *win) {
+  char input_char;
+  while (true) {
+    render_word(win, "Pause");
+    input_char = getch();
+    if (input_char == ' ') {
+      return;
+    }
+  }
+}
+
+// Renders the screen, counts the timer, sets pause
+void run_timer(WINDOW *win, unsigned time) {
+  uint8_t formated_mins;
+  uint8_t formated_secs;
   char input_char;
 
-  // Getting args via CLI, like: "pomodoro 25 5 0"
-  // TODO: unsafe, check to atoi
-  if (argc == 4) {
-    work_time = atoi(argv[1]) * 60;
-    break_time = atoi(argv[2]) * 60;
-    cycles = atoi(argv[3]);
-  }
+  while (time != 0) {
+    formated_mins = time / 60;
+    formated_secs = time % 60;
 
-  // Initialize empty screen
-  // TODO: unsafe, place checks
-  initscr();
-
-  // Was taken from flappy bird in ncurses
-  //cbreak();
-  noecho();
-  halfdelay(10);
-
-  // Set cursor invisible
-  curs_set(0);
-
-  // Initialize main window full screen
-  WINDOW *win = newwin(0, 0, 0, 0);
-  // Without refresh it doesn't work at all, still don't know why
-  // TODO: wrefresh
-  refresh();
-
-  while (true) {
-    wclear(win);
-    // 0, 0 are for default border style
-    box(win, 0, 0);
-
-    uint8_t formated_mins = work_time / 60;
-    uint8_t formated_secs = work_time % 60;
-    uint8_t y_pos = LINES / 2;
-    // uint8_t x_pos = (COLS / 2) - int_len(formated_mins) - COLON_LENGTH +
-                    // int_len(formated_secs);
-    uint8_t x_pos = (COLS - int_len(formated_mins) - int_len(formated_secs))/2;
-
-    // Print message at the center of the screen
-    if (formated_secs < 10) {
-	  mvwprintw(win, y_pos, x_pos, "%i:0%i", formated_mins, formated_secs);
-    } else {
-      mvwprintw(win, y_pos, x_pos, "%i:%i", formated_mins, formated_secs);
-    }
-
-    // Show changes
-    wrefresh(win);
-    // TODO: sleep -> napms
-    // https://stackoverflow.com/questions/72111820/how-can-i-use-napms-in-ncurses
-    // sleep(1);
-    work_time -= 1;
+    render_timer(win, &time);
+    time -= 1;
 
     // Getting space quits the program
-    // getch is set to halfdelay(10) so every 10ms it gets ERR if nothing is pressed
+    // getch is set to halfdelay(10) so every 10ms it gets ERR if nothing is
+    // pressed
     input_char = getch();
     if (input_char == ERR) {
       continue;
+    } else if (input_char == 27 || input_char == 'q') {
+      // <ESC> or q should stop the timer
+      // TODO: stop the timer
     } else if (input_char == ' ') {
-      break;
+      pause_screen(win);
     }
   }
+}
 
+// Transition screen between modes
+void transition_screen(WINDOW *win) {
+    char input_char;
+    while (true) {
+		render_word(win, "Press any key");
+		input_char = getch();
+		if (input_char == ERR) {
+    		continue;
+		} else {
+    		return;
+		}
+    }
+}
+
+int main(int argc, char **argv) {
+  // Time set
+  unsigned work_time = 25 * 60;
+  unsigned short_break_time = 5 * 60;
+  unsigned long_break_time = 20 * 60;
+  unsigned cycles_lim = 4;
+  unsigned cycle = 0;
+  State state = WORK;
+
+  // Getting args via CLI, like: "pomodoro 25 5 0"
+  // TODO: unsafe, check to atoi
+  if (argc == 5) {
+    work_time = (unsigned)(atoi(argv[1]) * 60);
+    short_break_time = (unsigned)(atoi(argv[2]) * 60);
+    cycles_lim = (unsigned)(atoi(argv[3]));
+    long_break_time = (unsigned)(atoi(argv[4]));
+  }
+
+  // Initialize empty screen
+  initscr();
+  if (stdscr == NULL) {
+    perror("Couldn't Initialize a screen");
+    exit(1);
+  }
+
+  // Was taken from flappy bird in ncurses
+  // cbreak();
+  noecho();
+  halfdelay(10);
+  
+  curs_set(0); // Set cursor invisible
+
+  // Initialize main window full screen
+  WINDOW *win = newwin(0, 0, 0, 0);
+
+  // signal(SIGINT, );
+
+  while (true) {
+    run_timer(win, work_time);
+    transition_screen(win);
+    state = BREAK;
+    cycle += 1;
+    if (cycle == cycles_lim) {
+      run_timer(win, long_break_time);
+      cycle = 0;
+    } else {
+      run_timer(win, short_break_time);
+    }
+    transition_screen(win);
+  }
+
+  // Without refresh it doesn't work at all, still don't know why
+  // TODO: wrefresh
+  refresh();
   // Cleaning procedure
+  clear();
   endwin();
   delwin(win);
 
@@ -100,5 +172,5 @@ int main(int argc, char **argv) {
   echo();
   nocbreak();
   curs_set(1);
-  clear();
+  // execl("stty", "sane");
 }
