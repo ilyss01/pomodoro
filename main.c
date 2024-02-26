@@ -4,6 +4,7 @@
 #include <string.h> // strlen
 #include <unistd.h> // for sleep
 #include <signal.h>
+#define COLON_LEN 1
 
 // TODO: switching between mode on pause
 typedef enum state {
@@ -35,10 +36,10 @@ void render_timer(WINDOW *win, unsigned *time) {
   if (formated_secs < 10) {
     // Additional zero is added in timer, so it must be subtracted from x
     // coord
-    x_pos = (COLS - int_len(formated_mins) - int_len(formated_secs) - 1) / 2;
+    x_pos = (COLS/2) - (int_len(formated_mins) + int_len(formated_secs) + COLON_LEN) / 2;
     mvwprintw(win, y_pos, x_pos, "%i:0%i", formated_mins, formated_secs);
   } else {
-    x_pos = (COLS - int_len(formated_mins) - int_len(formated_secs)) / 2;
+    x_pos = (COLS/2) - (int_len(formated_mins) + int_len(formated_secs) + COLON_LEN) / 2;
     mvwprintw(win, y_pos, x_pos, "%i:%i", formated_mins, formated_secs);
   }
   // Show changes
@@ -48,7 +49,7 @@ void render_timer(WINDOW *win, unsigned *time) {
 // Renders box around the screen and given word in the middle
 void render_word(WINDOW *win, const char *word) {
   uint8_t y_pos = LINES / 2;
-  uint8_t x_pos = (COLS - strlen(word))/2;
+  uint8_t x_pos = (COLS/2) - (strlen(word)/2);
   wclear(win);
   box(win, 0, 0);
   mvwprintw(win, y_pos, x_pos,"%s", word);
