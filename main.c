@@ -48,10 +48,10 @@ void render_timer(WINDOW *win, unsigned *time) {
 // Renders box around the screen and given word in the middle
 void render_word(WINDOW *win, const char *word) {
   uint8_t y_pos = LINES / 2;
-  uint8_t x_pos = (COLS - strlen("Pause"))/2;
+  uint8_t x_pos = (COLS - strlen(word))/2;
   wclear(win);
   box(win, 0, 0);
-  mvwprintw(win, y_pos, x_pos, "Pause");
+  mvwprintw(win, y_pos, x_pos,"%s", word);
   wrefresh(win);
 }
 
@@ -69,13 +69,9 @@ void pause_screen(WINDOW *win) {
 
 // Renders the screen, counts the timer, sets pause
 void run_timer(WINDOW *win, unsigned time) {
-  uint8_t formated_mins;
-  uint8_t formated_secs;
   char input_char;
 
   while (time != 0) {
-    formated_mins = time / 60;
-    formated_secs = time % 60;
 
     render_timer(win, &time);
     time -= 1;
@@ -86,20 +82,26 @@ void run_timer(WINDOW *win, unsigned time) {
     input_char = getch();
     if (input_char == ERR) {
       continue;
-    } else if (input_char == 27 || input_char == 'q') {
+    } else if (input_char == 27 || input_char == 113) {
       // <ESC> or q should stop the timer
       // TODO: stop the timer
     } else if (input_char == ' ') {
       pause_screen(win);
+    } else {
+      napms(1000);
     }
   }
 }
 
 // Transition screen between modes
-void transition_screen(WINDOW *win) {
+void transition_screen(WINDOW *win, State state) {
     char input_char;
     while (true) {
-		render_word(win, "Press any key");
+        if (state == WORK) {
+		  render_word(win, "Press any key to start break time");
+        } else {
+		  render_word(win, "Press any key to start work time");
+        }
 		input_char = getch();
 		if (input_char == ERR) {
     		continue;
@@ -115,7 +117,7 @@ int main(int argc, char **argv) {
   unsigned short_break_time = 5 * 60;
   unsigned long_break_time = 20 * 60;
   unsigned cycles_lim = 4;
-  unsigned cycle = 0;
+  unsigned cycle = 1;
   State state = WORK;
 
   // Getting args via CLI, like: "pomodoro 25 5 0"
@@ -123,8 +125,8 @@ int main(int argc, char **argv) {
   if (argc == 5) {
     work_time = (unsigned)(atoi(argv[1]) * 60);
     short_break_time = (unsigned)(atoi(argv[2]) * 60);
-    cycles_lim = (unsigned)(atoi(argv[3]));
-    long_break_time = (unsigned)(atoi(argv[4]));
+    long_break_time = (unsigned)(atoi(argv[3]) * 60);
+    cycles_lim = (unsigned)(atoi(argv[4]));
   }
 
   // Initialize empty screen
@@ -148,16 +150,16 @@ int main(int argc, char **argv) {
 
   while (true) {
     run_timer(win, work_time);
-    transition_screen(win);
+    transition_screen(win, state);
     state = BREAK;
     cycle += 1;
     if (cycle == cycles_lim) {
       run_timer(win, long_break_time);
-      cycle = 0;
+      cycle = 1;
     } else {
       run_timer(win, short_break_time);
     }
-    transition_screen(win);
+    transition_screen(win, state);
   }
 
   // Without refresh it doesn't work at all, still don't know why
