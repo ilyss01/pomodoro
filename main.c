@@ -13,8 +13,6 @@ typedef enum state {
   BREAK,
 } State;
 
-// TODO: fix a bug with strange centering
-
 // Length of given integer
 unsigned int_len(int n) {
   unsigned counter = 0;
@@ -121,7 +119,7 @@ int main(int argc, char **argv) {
   unsigned cycle = 1;
   State state = WORK;
 
-  // Getting args via CLI, like: "pomodoro 25 5 0"
+  // Getting args via CLI, like: "pomodoro 25 5 0 3"
   // TODO: unsafe, check to atoi
   if (argc == 5) {
     work_time = (unsigned)(atoi(argv[1]) * 60);
